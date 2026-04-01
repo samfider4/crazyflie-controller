@@ -7,6 +7,7 @@ from cflib.utils import uri_helper
 from crazyflie_client import CrazyflieClient
 from control import Goal, PIDPositionController
 from vicon_motion import ViconMotionClient
+from flight_logger import FlightLogger
 
 
 URI = uri_helper.uri_from_env(default='radio://0/100/2M/E7E7E7E7E9')
@@ -37,6 +38,7 @@ def main() -> None:
     cf = CrazyflieClient(URI)
     mocap = ViconMotionClient(HOST_NAME, MOCAP_SYSTEM_TYPE)
     controller = PIDPositionController(window_size=TIME_SIZE)
+    logger = FlightLogger()
 
     cf.open_link()
     if not cf.wait_until_connected(timeout=10.0):
@@ -75,6 +77,14 @@ def main() -> None:
                 goal_z=goal.z,
             )
 
+            logger.log_sample(
+                runtime=runtime,
+                drone_pose=drone_pose,
+                goal=goal,
+                command=command,
+                ground_pose=ground_pose,
+            )
+
             print(
                 f'z_pos: {drone_pose.z:.3f}, '
                 f'z_goal: {goal.z:.3f}, '
@@ -86,6 +96,7 @@ def main() -> None:
         pass
     finally:
         print('\nKill button pressed, shutting down')
+        logger.save_all()
         cf.close()
 
 

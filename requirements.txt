@@ -10,3 +10,5 @@ motioncapture==1.0a2
 # Crazyflie Python library
 # Kept on the Bitcraze git source to match typical project setup
 cflib @ git+https://github.com/bitcraze/crazyflie-lib-python.git
+
+matplotlib>=3.8
