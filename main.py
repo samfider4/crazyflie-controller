@@ -7,16 +7,19 @@ from cflib.utils import uri_helper
 from crazyflie_client import CrazyflieClient
 from crazyflie_telemetry import CrazyflieTelemetry
 from control import Goal, PIDPositionController
-from vicon_motion import ViconMotionClient
 from flight_logger import FlightLogger
+from flight_service import FlightService
+from vicon_motion import ViconMotionClient
 
 
 URI = uri_helper.uri_from_env(default='radio://0/100/2M/E7E7E7E7E9')
+# URI = uri_helper.uri_from_env(default='radio://0/90/2M/E7E7E7E7E8')
 TIME_SIZE = 5
 
 HOST_NAME = '128.101.167.111'
 MOCAP_SYSTEM_TYPE = 'vicon'
 DRONE_OBJECT_NAME = '2026_Drone1'
+# DRONE_OBJECT_NAME = '2026_Drone2'
 GROUND_OBJECT_NAME = 'box'
 
 TAKEOFF_HEIGHT = 1.5
@@ -42,65 +45,44 @@ def main() -> None:
     controller = PIDPositionController(window_size=TIME_SIZE)
     logger = FlightLogger()
 
-    cf.open_link()
-    if not cf.wait_until_connected(timeout=10.0):
-        print('Timed out waiting for Crazyflie connection')
-        cf.close()
+    flight_service = FlightService(
+        cf_client=cf,
+        mocap_client=mocap,
+        controller=controller,
+        logger=logger,
+        drone_object_name=DRONE_OBJECT_NAME,
+        telemetry_client=telemetry_client,
+        ground_object_name=GROUND_OBJECT_NAME,
+    )
+
+    flight_service.start()
+
+    start_pose = None
+    while start_pose is None and not keyboard.is_pressed('esc'):
+        start_pose = flight_service.get_latest_pose(DRONE_OBJECT_NAME)
+        time.sleep(0.01)
+
+    if start_pose is None:
+        print('Could not get initial drone pose')
+        flight_service.stop()
         return
-
-    telemetry_client.start()
-
-    start_pose = mocap.get_pose(DRONE_OBJECT_NAME)
-    start_time = time.time()
-
-    cf.unlock_thrust_protection()
 
     try:
         while not keyboard.is_pressed('esc'):
-            frame = mocap.wait_for_frame()
-
-            drone_pose = frame.get(DRONE_OBJECT_NAME)
-            if drone_pose is None:
-                continue
-
+            frame = flight_service.get_latest_frame()
+            runtime = flight_service.get_runtime()
             ground_pose = frame.get(GROUND_OBJECT_NAME)
-            runtime = time.time() - start_time
+
             goal = build_goal(start_pose, ground_pose, runtime)
+            flight_service.set_goal(goal)
 
-            controller.add_sample(
-                x=drone_pose.x,
-                y=drone_pose.y,
-                z=drone_pose.z,
-                timestamp=drone_pose.timestamp,
-            )
-
-            command = controller.compute_command(
-                current_yaw=drone_pose.yaw,
-                goal_x=goal.x,
-                goal_y=goal.y,
-                goal_z=goal.z,
-            )
-
-            telemetry = telemetry_client.get_telemetry()
-
-            logger.log_sample(
-                runtime=runtime,
-                drone_pose=drone_pose,
-                goal=goal,
-                command=command,
-                ground_pose=ground_pose,
-                telemetry=telemetry,
-            )
-
-            cf.send_setpoint(command.roll, command.pitch, 0.0, command.thrust)
+            time.sleep(0.01)
 
     except KeyboardInterrupt:
         pass
     finally:
         print('\nKill button pressed, shutting down')
-        logger.save_all()
-        telemetry_client.stop()
-        cf.close()
+        flight_service.stop()
 
 
 if __name__ == '__main__':
