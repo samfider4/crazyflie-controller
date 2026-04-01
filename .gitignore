@@ -1,0 +1,87 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+.cache/
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Local env files
+.env
+.env.*
+*.local
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+out/
+
+# VS Code
+.vscode/
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Python packaging / installers
+pip-wheel-metadata/
+
+# Type checker / linters
+.dmypy.json
+dmypy.json
+
+# Generated plots / data logs
+*.png
+*.csv
+
+# Crazyflie / local runtime cache
+cache/
+
+# Optional: keep example data dirs tracked by adding a placeholder file
+# !data/.gitkeep

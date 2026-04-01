@@ -1,0 +1,12 @@
+# Core numerical dependency
+numpy>=1.26,<3
+
+# Keyboard emergency-stop handling
+keyboard>=0.13
+
+# Motion capture client library
+motioncapture==1.0a2
+
+# Crazyflie Python library
+# Kept on the Bitcraze git source to match typical project setup
+cflib @ git+https://github.com/bitcraze/crazyflie-lib-python.git
