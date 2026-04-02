@@ -4,10 +4,13 @@ import threading
 import time
 from typing import Optional
 
+from cflib.utils import uri_helper
+
 from control import ControlCommand, Goal, PIDPositionController
 from crazyflie_client import CrazyflieClient
 from crazyflie_telemetry import CrazyflieTelemetry
 from flight_logger import FlightLogger
+from vicon_motion import ViconMotionClient
 
 
 class FlightService:
@@ -18,21 +21,19 @@ class FlightService:
 
     def __init__(
         self,
-        cf_client: CrazyflieClient,
-        mocap_client,
-        controller: PIDPositionController,
-        logger: FlightLogger,
+        crazyflie_uri: str,
+        mocap_hostname: str,
+        mocap_system_type: str,
         drone_object_name: str,
-        telemetry_client: CrazyflieTelemetry | None = None,
         yaw_rate_command: float = 0.0,
         ground_object_name: str | None = None,
     ):
-        self._cf_client = cf_client
-        self._mocap_client = mocap_client
-        self._controller = controller
-        self._logger = logger
+        self._cf_client = CrazyflieClient(uri_helper.uri_from_env(default=crazyflie_uri))
+        self._mocap_client = ViconMotionClient(mocap_hostname, mocap_system_type)
+        self._controller = PIDPositionController()
+        self._logger = FlightLogger()
         self._drone_object_name = drone_object_name
-        self._telemetry_client = telemetry_client
+        self._telemetry_client = CrazyflieTelemetry(self._cf_client.cf)
         self._yaw_rate_command = yaw_rate_command
         self._ground_object_name = ground_object_name
 
