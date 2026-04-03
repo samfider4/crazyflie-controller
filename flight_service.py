@@ -41,6 +41,7 @@ class FlightService:
         self._latest_frame: dict | None = None
         self._latest_runtime: float = 0.0
         self._last_command: Optional[ControlCommand] = None
+        self._last_seen_frame_id: int = 0
 
         self._start_time: float | None = None
         self._thread: threading.Thread | None = None
@@ -53,6 +54,7 @@ class FlightService:
             return
 
         self._controller.reset()
+        self._last_seen_frame_id: int = 0
 
         self._cf_client.open_link()
         if not self._cf_client.wait_until_connected(timeout=10.0):
@@ -117,7 +119,16 @@ class FlightService:
 
     def _run_loop(self) -> None:
         while not self._stop_event.is_set():
-            frame = self._mocap_client.wait_for_frame()
+            result = self._mocap_client.wait_for_new_frame(
+                last_frame_id=self._last_seen_frame_id,
+                timeout=0.5,
+            )
+            if result is None:
+                continue
+
+            frame_id, frame = result
+            self._last_seen_frame_id = frame_id
+
             runtime = time.time() - self._start_time if self._start_time is not None else 0.0
             drone_pose = frame.get(self._drone_object_name)
 
@@ -149,9 +160,7 @@ class FlightService:
                 goal_z=goal.z,
             )
 
-            telemetry = None
-            if self._telemetry_client is not None:
-                telemetry = self._telemetry_client.get_telemetry()
+            telemetry = self._telemetry_client.get_telemetry() if self._telemetry_client is not None else None
 
             self._logger.log_sample(
                 runtime=runtime,

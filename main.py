@@ -44,18 +44,19 @@ def main() -> None:
     CrazyflieClient.init_drivers()
 
     mocap_client = ViconMotionClient(MOCAP_HOSTNAME, MOCAP_SYSTEM_TYPE)
+    mocap_client.start()
 
     flight_service_1 = FlightService(
         crazyflie_uri=CRAZYFLIE_URI_1,
         drone_object_name=DRONE_OBJECT_NAME_1,
-        mocap_client = mocap_client,
-        log_output_dir = "flight_logs_1"
+        mocap_client=mocap_client,
+        log_output_dir="flight_logs_1"
     )
     flight_service_2 = FlightService(
         crazyflie_uri=CRAZYFLIE_URI_2,
         drone_object_name=DRONE_OBJECT_NAME_2,
         mocap_client=mocap_client,
-        log_output_dir = "flight_logs_2"
+        log_output_dir="flight_logs_2"
     )
 
     stop_event = threading.Event()
@@ -95,21 +96,22 @@ def main() -> None:
             if stop_event.wait(TAKEOFF_HOLD_SECONDS):
                 break
 
-            # flight_service_1.set_goal(
-            #     Goal(x=start_pose_1.x + 0.5, y=start_pose_1.y, z=start_pose_1.z + TAKEOFF_HEIGHT)
-            # )
-            # flight_service_2.set_goal(
-            #     Goal(x=start_pose_2.x + 0.5, y=start_pose_2.y, z=start_pose_2.z + TAKEOFF_HEIGHT)
-            # )
-            #
-            # if stop_event.wait(TAKEOFF_HOLD_SECONDS):
-            #     break
+            flight_service_1.set_goal(
+                Goal(x=start_pose_1.x + 1.0, y=start_pose_1.y, z=start_pose_1.z + TAKEOFF_HEIGHT)
+            )
+            flight_service_2.set_goal(
+                Goal(x=start_pose_2.x + 1.0, y=start_pose_2.y, z=start_pose_2.z + TAKEOFF_HEIGHT)
+            )
+
+            if stop_event.wait(TAKEOFF_HOLD_SECONDS):
+                break
 
     except KeyboardInterrupt:
         print('\nCtrl+C pressed, shutting down')
     finally:
         flight_service_1.stop()
         flight_service_2.stop()
+        mocap_client.stop()
         keyboard.unhook_all_hotkeys()
 
 
