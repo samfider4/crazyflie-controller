@@ -1,4 +1,4 @@
-## Members:
+# Members:
 
 | Name               | UMN Email        |
 | ------------------ | :--------------- |
@@ -8,9 +8,10 @@
 | Max Yantes         | yante011@umn.edu |
 
 The only supported versions of Python are 3.11.X.
+
 **You must be using 3.11.X or the code will not run**
 
-## Installation Instructions
+# Installation Instructions
 
 On Windows, to **install the USB driver**, download the USB driver from [here](http://zadig.akeo.ie/). Plug in the radio and run the program.
 Select the correct device in the dropdown and set libusbK as the target driver, and install. To access the drone while plugged in with USB, repeat the same procedure, except plug in the drone instead of the radio.
@@ -27,9 +28,35 @@ It may help to also have the drones on separate channels. This can be changed by
 - On subsequent sessions, remember to **reactivate your virtual environment** before running scripts.
 - In order to use DroneControlLib in a separate file, add `from DroneControlLib import *` to your file and **make sure DroneControlLib.py is in the same directory** as your new file.
 
+# Code Overview
+
 ## Mission Control
 
+This layer...
+
 ## Flight Control
+
+This layer implements a PD position and heading controller for the drone. It takes recent Vicon position/yaw samples, compares them to a desired goal state (x, y, z, heading), and outputs roll, pitch, yaw-rate, and thrust commands for the Crazyflie.
+
+#### Main functions
+- `add_sample(...)`
+    - Stores the latest tracked position, yaw, and timestamp.
+- `compute_command(goal)`
+    - Main control step:
+        - computes position error to the goal
+        - rotates x/y error from world frame into the drone’s local frame
+        - estimates error rates using recent samples
+        - applies PD control to generate roll, pitch, and thrust
+        - optionally computes yaw-rate control to match a target heading
+        - clamps outputs to safe command limits
+- `reset()`
+    - Clears stored history.
+
+#### Supporting data classes
+
+- `Goal` – desired position and optional heading
+- `ControlCommand` – final command output
+- `PIDGains` – tunable controller gains and limits
 
 ## Flight Service
 
